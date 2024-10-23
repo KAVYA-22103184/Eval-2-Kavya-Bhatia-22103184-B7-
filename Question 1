@@ -1,0 +1,47 @@
+import pandas as pd
+from pymongo import MongoClient
+
+
+csv_file = "C:\Users\22103184\Downloads\1.csv"
+df = pd.read_csv(csv_file)
+
+import pandas as pd
+from pymongo import MongoClient
+
+client = MongoClient('mongodb://localhost:27017/')
+db = client['medical_suppliers_db']
+collection = db['suppliers']
+
+collection.drop()  
+data_to_insert = df.to_dict(orient='records')
+collection.insert_many(data_to_insert)
+
+
+ca_providers = collection.find({"practicestate": "CA"})
+print("Providers in CA:")
+for provider in ca_providers:
+    print(provider)
+
+
+ny_providers = collection.find({
+    "practicestate": "NY",
+    "specialitieslist": "Medical Supply Company Other",
+    "providertypelist": {"$regex": "OXYGEN & EQUIPMENT"}
+})
+
+print("\nNY Providers offering 'Medical Supply Company Other' and 'OXYGEN & EQUIPMENT':")
+for provider in ny_providers:
+    print(provider)
+
+
+collection.update_one({"provider_id": 20506619}, {"$set": {"telephonenumber": "123123123"}})
+print("\nPhone number updated for provider 20506619.")
+
+
+tx_supplies = collection.distinct("specialitieslist", {"practicestate": "TX"})
+print("\nUnique supplies offered by providers in TX:")
+for supply in tx_supplies:
+    print(supply)
+
+
+client.close()
